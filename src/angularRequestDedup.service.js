@@ -16,14 +16,12 @@ function AngularRequestDedup($httpParamSerializer, $resource) {
     }
   }
 
-  function _getKey(url, params) {
+  function _getKey(url, params, methodKey) {
     const serializedParams = $httpParamSerializer(params);
-    return `${url}${serializedParams}`;
+    return `${methodKey}:${url}${serializedParams}`;
   }
 
-  function _getPromise(url, params, isPersistent, cb) {
-    const key = _getKey(url, params);
-
+  function _getPromise(key, isPersistent, cb) {
     if (!cachedPromises[key]) {
       _addPromise(key, isPersistent, cb);
     }
@@ -44,8 +42,9 @@ function AngularRequestDedup($httpParamSerializer, $resource) {
             const params = getObjectWithoutProperties(allParams, [
               "isPersistent",
             ]);
+            const key = _getKey(url, params, methodKey);
 
-            return _getPromise(url, params, isPersistent, function () {
+            return _getPromise(key, isPersistent, function () {
               return method(params);
             });
           };
